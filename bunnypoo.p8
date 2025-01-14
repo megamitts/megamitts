@@ -48,7 +48,16 @@ carrot = {
     max_lifetime = 30 * 3  -- 30 fps * 3 seconds
 }
 
+parsnip = {
+    x = 0,
+    y = 0,
+    radius = 4,
+    active = false,
+    lifetime = 0,  -- track how long carrot has existed
+    max_lifetime = 30 * 3  -- 30 fps * 3 seconds
+}
 
+parsniptimer = 0
 timer = 0
 score = 0
 
@@ -107,8 +116,12 @@ function _update()
 				-- check if pooped
 					if player.poop == 0 then
 						player.speed = 2
-					else
+					end
+					if player.poop == 1 then
 						player.speed = 1
+					end
+					if player.poop == 3 then
+						player.speed = 5
 					end
 
 
@@ -133,6 +146,30 @@ function _update()
         carrot.active = false
         carrot.lifetime = 0
         score += 1
+    end
+    
+    
+    -- parsnip spawn parsniptimer
+    if not parsnip.active then
+        parsniptimer += 1
+        if parsniptimer >= 30*20 then 
+            spawn_parsnip()
+            parsniptimer = 0
+        end
+    else
+        -- update parsnip lifetime
+        parsnip.lifetime += 1
+        if parsnip.lifetime >= parsnip.max_lifetime then
+            parsnip.active = false
+            parsnip.lifetime = 0
+        end
+    end
+
+				-- collision check
+    if parsnip.active and check_parsnipcollision() then
+        parsnip.active = false
+        parsnip.lifetime = 0
+        player.poop = 3
     end
 
 	    -- farmer spawn/despawn logic
@@ -209,28 +246,133 @@ function _draw()
     
     player.timer += 1
     
-				-- draw carrot if active
-    if carrot.active then
-        spr(6, carrot.x, carrot.y)
-				end
+				draw_carrot()
+				draw_parsnip()
 
 				print("score: "..score, 2, 2, 0)
 
-    -- draw all poos at their stored positions
+    draw_poos()
+    
+    draw_rabbit()
+				
+				
+    
+    draw_farmer()
+    
+    draw_bullets()
+    
+    check_hit()
+       
+   
+				hearts()
+				
+    check_lives()
+    
+				check_score()
+				
+end
+
+
+
+-->8
+function restart()
+				sfx(-1)
+				bunny.angle = 0
+				player.timer = 0
+				player.poop = 0
+				player.x = 64
+				player.y = 64
+				player.lives = 3
+				timer = 0
+				farmer.timer = 0
+				score = 0
+				farmer.active = false
+				carrot.active = false
+				parsnip.active = false
+				music(0)
+				poos = {}
+end
+
+function hearts()
+
+				rect(94, 1, 120, 10)		
+		
+				if player.lives == 3 then
+				print("♥♥♥", 96,3,9)
+				end
+				
+				if player.lives == 2 then
+				print(" ♥♥", 96,3,9)
+				end
+				
+				if player.lives == 1 then
+				print("  ♥", 96,3,9)
+				end
+
+end
+
+function check_lives()
+	if player.lives == 0 then
+    hit()
+    repeat
+  		flip()
+				until btn(4)
+    -- restart the game
+    restart()
+				end
+end
+
+function check_score()
+	if score == 10 then
+				game_over_win()
+				repeat
+  		flip()
+				until btn(4)
+				-- restart the game
+				restart()
+				end
+end
+
+function check_hit()
+if player.hit == 8 then
+    player.lives -=1
+    player.hit = 0
+    end
+end
+
+function draw_carrot()
+-- draw carrot if active
+    if carrot.active then
+        spr(6, carrot.x, carrot.y)
+				end
+end
+
+function draw_parsnip()
+-- draw parsnip if active
+    if parsnip.active then
+        spr(7, parsnip.x, parsnip.y)
+				end
+end
+
+
+function draw_poos()
+-- draw all poos at their stored positions
     for poo in all(poos) do
         spr(5, poo.x, poo.y)
     end
-    
-    -- draw the rabbit
+end
+
+function draw_rabbit()
+-- draw the rabbit
     if player.facing_left == 1 then
         spr(1, player.x, player.y, 2, 2)
     else
         spr(1, player.x, player.y, 2, 2, true)    
     end
-				
-				
-    
-    -- draw farmer if active
+end
+
+function draw_farmer()
+-- draw farmer if active
     if farmer.active then
         spr(9,farmer.x, farmer.y, 4, 4)  -- red square
     				if farmer.timer < farmer.shoot_time then
@@ -240,56 +382,30 @@ function _draw()
     								end
     				end
     end
-    
-    -- draw all bullets
+end
+
+function draw_bullets()
+-- draw all bullets
     for bullet in all(farmer.bullets) do
         spr(0, bullet.x, bullet.y) -- use default sprite 0 as bullet.
 								
     end
-    
-    if player.hit == 8 then
-    player.lives -=1
-    player.hit = 0
-    end
-       
-   
-				if player.lives == 3 then
-				print("♥♥♥", 96,0,9)
-				end
-				
-				if player.lives == 2 then
-				print(" ♥♥", 96,0,9)
-				end
-				
-				if player.lives == 1 then
-				print("  ♥", 96,0,9)
-				end
-				
-    if player.lives == 0 then
-    hit()
-    repeat
-  		flip()
-				until btn(4)
-    -- restart the game
-    restart()
-				end
-    
-				if score == 10 then
-				game_over_win()
-				repeat
-  		flip()
-				until btn(4)
-				-- restart the game
-				restart()
-				end
-				
-end
+end    
+ 
+
 
 function spawn_carrot()
 	carrot.x = flr(rnd(120))+4
 	carrot.y = flr(rnd(120))+4
 	carrot.active = true
 	carrot.lifetime = 0
+end
+
+function spawn_parsnip()
+	parsnip.x = flr(rnd(120))+4
+	parsnip.y = flr(rnd(120))+4
+	parsnip.active = true
+	parsnip.lifetime = 0
 end
 
 function check_collision()
@@ -303,6 +419,16 @@ function check_collision()
     return (dist_x * dist_x + dist_y * dist_y) <= (carrot.radius * carrot.radius)
 end
 
+function check_parsnipcollision()
+    -- rabbit vs parsnip collision
+    local closest_x = mid(player.x, parsnip.x, player.x + player.width)
+    local closest_y = mid(player.y, parsnip.y, player.y + player.height)
+    
+    local dist_x = parsnip.x - closest_x
+    local dist_y = parsnip.y - closest_y
+    
+    return (dist_x * dist_x + dist_y * dist_y) <= (parsnip.radius * parsnip.radius)
+end
 function hit()
 	cls(9)
 	print("the farmer killed you!", 20, 56, 0)
@@ -364,39 +490,24 @@ print("but watch out for farmer smith!")
 
 print("bunnies need to poop every 5")
 print("seconds or they slow down.")
+
 print("press ❎ to poop")
 print("press 🅾️ to start", 28, 88,0)
+print("ps: parsnips will cause zoomies!", 0, 100, 0)
 repeat
   flip()
 until btn(4)
 end
 
-
--->8
-function restart()
-				sfx(-1)
-				bunny.angle = 0
-				player.timer = 0
-				player.poop = 0
-				player.x = 64
-				player.y = 64
-				player.lives = 3
-				timer = 0
-				farmer.timer = 0
-				score = 0
-				farmer.active = false
-				music(0)
-				poos = {}
-end
 __gfx__
-00000000000000000000000000000000000000000000000000033000000000000000000000000555550000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000033000000000000000000000005555555500000000000000000000000000000000000000000000
-0070070000070700000000000000000000000000000000000033330000000000000000000005eeeeeee000000000000000000000000000000000000000000000
-0007700000777770000000000000000000000000004444000999999000000000000000000005f1ffff1000000000000000000000000000000000000000000000
-0007700000777770000000000000000000000000004444000999999000000000000000000005f1ffff1000000000000000000000000000000000000000000000
-007007000777777000000000000000000000000004444440009999000000000000000000000ef1ffff1000000000000000000000000000000000000000000000
-000000007777777777000000000000000000000044444444009999000000000000000000000ffffffef000000000000000000000000000000000000000000000
-00000000777a7777777000000000000000000000444444440009900000000000000000000000ffdddff000000000000000000000000000000000000000000000
+00000000000000000000000000000000000000000000000000033000000330000000000000000555550000000000000000000000000000000000000000000000
+00000000000000000000000000000000000000000000000000033000000330000000000000005555555500000000000000000000000000000000000000000000
+0070070000070700000000000000000000000000000000000033330000333300000000000005eeeeeee000000000000000000000000000000000000000000000
+000770000077777000000000000000000000000000444400099999900ffffff0000000000005f1ffff1000000000000000000000000000000000000000000000
+000770000077777000000000000000000000000000444400099999900ffffff0000000000005f1ffff1000000000000000000000000000000000000000000000
+0070070007777770000000000000000000000000044444400099990000ffff0000000000000ef1ffff1000000000000000000000000000000000000000000000
+0000000077777777770000000000000000000000444444440099990000ffff0000000000000ffffffef000000000000000000000000000000000000000000000
+00000000777a77777770000000000000000000004444444400099000000ff000000000000000ffdddff000000000000000000000000000000000000000000000
 00000000777a77777777ff000000000000000000000000000000000000000000000000000008cfdfdfc800000000000000000000000000000000000000000000
 00000000777777777777ff000000000000000000000000000000000000000000000000000008c8fff8c800000000000000000000000000000000000000000000
 0000000007777777777770000000000000000000000000000000000000000000000000000088c88888c880000000000000000000000000000000000000000000
