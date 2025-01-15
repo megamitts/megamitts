@@ -223,8 +223,9 @@ function _update()
         -- check for collision with player
         local dist = sqrt((bullet.x-player.x)^2 + (bullet.y-player.y)^2)
         if dist < player.radius then
-        player.hit -= 0.5
-            -- game over logic would go here
+        player.hit -= 2
+        deli(farmer.bullets,1)
+            
         end
     end
     
