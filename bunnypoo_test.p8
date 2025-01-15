@@ -31,7 +31,7 @@ player = {
     width = 16,
     height = 16,
     radius = 8,
-    hit = 0,
+    hit = 10,
     lives = 3,
     speed = 2,
     timer = 0,
@@ -223,7 +223,7 @@ function _update()
         -- check for collision with player
         local dist = sqrt((bullet.x-player.x)^2 + (bullet.y-player.y)^2)
         if dist < player.radius then
-        player.hit += 1
+        player.hit -= 0.5
             -- game over logic would go here
         end
     end
@@ -261,6 +261,8 @@ function _draw()
     
     draw_bullets()
     
+    rectfill(98,10,98+player.hit,12)
+    
     check_hit()
        
    
@@ -289,13 +291,14 @@ function restart()
 				farmer.active = false
 				carrot.active = false
 				parsnip.active = false
+				player.hit = 10
 				music(0)
 				poos = {}
 end
 
 function hearts()
 
-				rect(94, 1, 120, 10)		
+				rect(94, 1, 120, 15)		
 		
 				if player.lives == 3 then
 				print("♥♥♥", 96,3,9)
@@ -334,9 +337,9 @@ function check_score()
 end
 
 function check_hit()
-if player.hit == 8 then
+if player.hit == 2 then
     player.lives -=1
-    player.hit = 0
+    player.hit = 10
     end
 end
 
