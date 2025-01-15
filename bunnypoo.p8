@@ -495,9 +495,10 @@ print("but watch out for farmer smith!")
 print("bunnies need to poop every 5")
 print("seconds or they slow down.")
 
-print("press ❎ to poop")
+print("press ❎ to poop", 30, 78, 0)
 print("press 🅾️ to start", 28, 88,0)
 print("ps: parsnips will cause zoomies!", 0, 100, 0)
+print("pps: too much poop hides carrots!")
 repeat
   flip()
 until btn(4)
